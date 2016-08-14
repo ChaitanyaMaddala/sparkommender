@@ -45,7 +45,9 @@ after spending lots of effort on various optimisations when using Spark Job Serv
 Great performance results of the one million recommendation test.
 
 ## What I learned
-Use the best tool for the job. Spark was not made for super fast response times.
+Use the best tool for the job: Spark was not made for super fast response times. 
+
+What I already knew: Docker was made for portability and REST for scalability.
 
 ## What's next for Sparkommender
 Try some Deep Learning tools like Tensorflow to come up with more accurate recommendation model.
