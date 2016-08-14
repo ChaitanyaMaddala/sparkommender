@@ -20,5 +20,5 @@ Summary Spark-notebooks are shared both in the original and in the pdf format [h
 [Sparkommender-service](sparkommender-service) holds the web service part of the project.
 
 Performance and stability simulation code is
-[here](sparkommender-ml/src/test/scala/sparkommender/gatling/SparkommenderSimulation).
+[here](sparkommender-ml/src/test/scala/sparkommender/gatling/SparkommenderSimulation.scala).
 The results of running one million recommendations are avaiable on: http://sparkommender.com/assets/simulation/index.html
