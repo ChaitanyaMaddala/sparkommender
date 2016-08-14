@@ -20,49 +20,32 @@ Second challenge is to actually apply the knowledge we gained (ML models)
 in a real business setting like a booking website where the users are not left
 waiting for the recommendations to load on the page.
 
-
 ##What it does
 
-**Sparkommender** is a project that tackles hotel recommendation problem at scale.
-
-1. Uses Spark to gain knowledge about the data and build best recommendation models
-2. Builds a microservice exposing a REST interface to make recommendations so
-any other web service, any computer or mobile application could easily integrate
-and make use of the predictions
-
+**Sparkommender** solves the above two challenges and allows hotel booking companies easily incorporate
+very fast and accurate hotel recommendation service directly into their
+websites or mobile apps. And, as a result, improve customer satisfaction and
+implicitly generate more revenue.
 
 ## How I built it
-1. Used portable and sharable Spark notebooks connecting to a Spark Cluster for data analysis and model building.
-2. Built Dockerized Play! Web Service with a REST interface
+1. Used Apache Spark with [notebooks](sparkommender-ml/notebooks) to gain knowledge about the data and build best
+recommendation models by applying various Machine Learning techniques.
+2. Built Dockerised Play! Web Service with a REST interface
 3. Tested portability by running both in IBM Containers Service and Docker Cloud/AWS
-4. Tested performance and stability by running Gatling tests (1 Million Recommendations Test URL)
+4. Tested performance and stability by running Gatling tests (http://sparkommender.com/assets/simulation/index.html)
 5. Built a simple website integrating the microservice (http://sparkommender.com)
 
 ## Challenges I ran into
-Random Forest implementation only returns 1 prediction and I didn't find a way to get more
-
-not fast enough -> Spark Job Server
+One of the initial ideas of the project was to use a streaming recommendation engine, where the recommendations
+themselves get better over time with the added information about the actual new bookings.
+However, having Spark serve the actual recommendations was not quick enough for production, even
+after spending lots of effort on various optimisations when using Spark Job Server.
 
 ## Accomplishments that I'm proud of
-
+Great performance results of the one million recommendation test.
 
 ## What I learned
-not fast enough -> Spark Job Server
-
-best tool for a given job, and spark is not made for super fast response times
+Use the best tool for the job. Spark was not made for super fast response times.
 
 ## What's next for Sparkommender
-
-One of the ideas is to use a streaming recommendation engine, where the recommendations
-themselves get better over time with the information about the actual new bookings.
-However, the nature of the data set used doesn't offer explicit ratings,
-but only implicit information like clicks and bookings.
-Therefore, in a near future, I could look into adding implicit recommendations to
-https://github.com/brkyvz/streaming-matrix-factorization project
-and extending the Sparkommender to receive the actual reservations.
-
-Extend to also use top per hotel_market (aka city) instead of top global.
-
-Use some Deep Learning like Tensorflow to come up with a better model
-
-Use Cassandra as a backend with in-memory option for quick serves?
+Try some Deep Learning tools like Tensorflow to come up with more accurate recommendation model.
