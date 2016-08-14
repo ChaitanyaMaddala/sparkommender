@@ -28,8 +28,7 @@ websites or mobile apps. And, as a result, improve customer satisfaction and
 implicitly generate more revenue.
 
 ## How I built it
-1. Used Apache Spark with [notebooks](sparkommender-ml/notebooks) to gain knowledge about the data and build best
-recommendation models by applying various Machine Learning techniques.
+1. Used Apache Spark with [notebooks](https://github.com/radek1st/sparkommender/tree/master/sparkommender-ml/notebooks) to gain knowledge about the data and build best recommendation models by applying various Machine Learning techniques.
 2. Built Dockerised Play! Web Service with a REST interface
 3. Tested portability by running both in IBM Containers Service and Docker Cloud/AWS
 4. Tested performance and stability by running Gatling tests (http://sparkommender.com/assets/simulation/index.html)
