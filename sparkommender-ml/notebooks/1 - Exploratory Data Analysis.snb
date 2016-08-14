@@ -1,0 +1,522 @@
+{
+  "metadata" : {
+    "name" : "1 - Exploratory Data Analysis",
+    "user_save_timestamp" : "1970-01-01T01:00:00.000Z",
+    "auto_save_timestamp" : "1970-01-01T01:00:00.000Z",
+    "language_info" : {
+      "name" : "scala",
+      "file_extension" : "scala",
+      "codemirror_mode" : "text/x-scala"
+    },
+    "trusted" : true,
+    "customLocalRepo" : null,
+    "customRepos" : null,
+    "customDeps" : null,
+    "customImports" : null,
+    "customArgs" : null,
+    "customSparkConf" : null
+  },
+  "cells" : [ {
+    "metadata" : {
+      "id" : "C83B8FB522AF491AA6CCD76D6C429AE3"
+    },
+    "cell_type" : "markdown",
+    "source" : "#Sparkommender - Exploratory Data Analysis"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "F0A640EFCD224B48ACCCB863AD6168EA"
+    },
+    "cell_type" : "code",
+    "source" : "import org.apache.spark.sql.{DataFrame, Row, SQLContext}\nimport org.apache.spark.sql.functions._\n\nval sqlContext = new SQLContext(sc)\n\nval csv = \"com.databricks.spark.csv\"\nval csvOptions = Map(\"delimiter\" -> \",\", \"header\" -> \"true\", \"inferSchema\" -> \"true\")\n",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "50FB891A4A03455184677DD9AD1A46CE"
+    },
+    "cell_type" : "code",
+    "source" : "val trainFile = \"/Users/radek.ostrowski/git/expedia-kaggle/data/train.csv\"\nval testFile = \"/Users/radek.ostrowski/git/expedia-kaggle/data/test.csv\"\nval destinationsFile = \"/Users/radek.ostrowski/git/expedia-kaggle/data/destinations.csv\"",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "trainFile: String = /Users/radek.ostrowski/git/expedia-kaggle/data/train.csv\ntestFile: String = /Users/radek.ostrowski/git/expedia-kaggle/data/test.csv\ndestinationsFile: String = /Users/radek.ostrowski/git/expedia-kaggle/data/destinations.csv\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 10
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "163DDCF89D4548DD88DF3D132A6D6D2D"
+    },
+    "cell_type" : "markdown",
+    "source" : "    3.8G  train.csv         - the training set\n    264M  test.csv          - the test set\n    132M  destinations.csv  - hotel search latent attributes"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "2C99DB0375354F2D844156A3DAD81FA3"
+    },
+    "cell_type" : "code",
+    "source" : "val trainDf = sqlContext.read.format(csv).options(csvOptions).load(trainFile).cache()",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "trainDf: org.apache.spark.sql.DataFrame = [date_time: timestamp, site_name: int, posa_continent: int, user_location_country: int, user_location_region: int, user_location_city: int, orig_destination_distance: double, user_id: int, is_mobile: int, is_package: int, channel: int, srch_ci: string, srch_co: string, srch_adults_cnt: int, srch_children_cnt: int, srch_rm_cnt: int, srch_destination_id: int, srch_destination_type_id: int, is_booking: int, cnt: int, hotel_continent: int, hotel_country: int, hotel_market: int, hotel_cluster: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 8
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "D1B96485666B4FBA8C14CD0DBD179A47"
+    },
+    "cell_type" : "code",
+    "source" : "trainDf.printSchema",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "root\n |-- date_time: timestamp (nullable = true)\n |-- site_name: integer (nullable = true)\n |-- posa_continent: integer (nullable = true)\n |-- user_location_country: integer (nullable = true)\n |-- user_location_region: integer (nullable = true)\n |-- user_location_city: integer (nullable = true)\n |-- orig_destination_distance: double (nullable = true)\n |-- user_id: integer (nullable = true)\n |-- is_mobile: integer (nullable = true)\n |-- is_package: integer (nullable = true)\n |-- channel: integer (nullable = true)\n |-- srch_ci: string (nullable = true)\n |-- srch_co: string (nullable = true)\n |-- srch_adults_cnt: integer (nullable = true)\n |-- srch_children_cnt: integer (nullable = true)\n |-- srch_rm_cnt: integer (nullable = true)\n |-- srch_destination_id: integer (nullable = true)\n |-- srch_destination_type_id: integer (nullable = true)\n |-- is_booking: integer (nullable = true)\n |-- cnt: integer (nullable = true)\n |-- hotel_continent: integer (nullable = true)\n |-- hotel_country: integer (nullable = true)\n |-- hotel_market: integer (nullable = true)\n |-- hotel_cluster: integer (nullable = true)\n\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 26
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab1202655558-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "D62F4CA088B147E483F4FD6D5EEBECB2"
+    },
+    "cell_type" : "code",
+    "source" : "display(trainDf, maxPoints=5)",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "4BA5A8BDAFA74B5488D74D28FE0B95B6"
+    },
+    "cell_type" : "markdown",
+    "source" : "## Let's look at three main components and what describes them: hotels, users and their interaction."
+  }, {
+    "metadata" : {
+      "id" : "0C7CD61FA28D436F81DBB4B4F9C86940"
+    },
+    "cell_type" : "markdown",
+    "source" : "### Hotels\nOur main goal is to predict the last column `hotel_cluster`"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "B4E0606AAA0140BD8D5EE5467C4D3AD6"
+    },
+    "cell_type" : "code",
+    "source" : "trainDf.select(\"hotel_cluster\").distinct.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res11: Long = 100\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "100"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 9
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "DBABC426028F41C9BA37534A1B4EA7D1"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Hotels are described by their location"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "C8253C8E6FDE4B6D9DC09A2FF85E1039"
+    },
+    "cell_type" : "code",
+    "source" : "val hotelsDf = trainDf.select(\"hotel_cluster\",\"hotel_continent\",\"hotel_country\",\"hotel_market\",\"srch_destination_id\",\"srch_destination_type_id\")",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "hotelsDf: org.apache.spark.sql.DataFrame = [hotel_cluster: int, hotel_continent: int, hotel_country: int, hotel_market: int, srch_destination_id: int, srch_destination_type_id: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 11
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab1544982315-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "3F43F669525C49B286173CEF0892FC46"
+    },
+    "cell_type" : "code",
+    "source" : "display(hotelsDf, maxPoints=5)",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "CB5ABE0A67F148A091AD048BAA0BF56B"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Two most important features are `hotel_market` which describes a city and `srch_destination_id` which describes a specific destination within that city."
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "ADD194C000D94F81809C9181D8080FA5"
+    },
+    "cell_type" : "code",
+    "source" : "hotelsDf.select(\"hotel_market\").distinct.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res20: Long = 2118\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "2118"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 15
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "BFFB22868CD040B286E29965620F0ADD"
+    },
+    "cell_type" : "code",
+    "source" : "hotelsDf.select(\"srch_destination_id\").distinct.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res24: Long = 59455\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "59455"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 17
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "407281DD24CB42B3B07B91AD85A96FF3"
+    },
+    "cell_type" : "markdown",
+    "source" : "###Additionally we have a file containing latent description of search destinations"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "C2F98F5D0E4C42B9A9A0E392BF485E6E"
+    },
+    "cell_type" : "code",
+    "source" : "val destinationsDf = sqlContext.read.format(csv).options(csvOptions).load(destinationsFile)",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "destinationsDf: org.apache.spark.sql.DataFrame = [srch_destination_id: int, d1: double, d2: double, d3: double, d4: double, d5: double, d6: double, d7: double, d8: double, d9: double, d10: double, d11: double, d12: double, d13: double, d14: double, d15: double, d16: double, d17: double, d18: double, d19: double, d20: double, d21: double, d22: double, d23: double, d24: double, d25: double, d26: double, d27: double, d28: double, d29: double, d30: double, d31: double, d32: double, d33: double, d34: double, d35: double, d36: double, d37: double, d38: double, d39: double, d40: double, d41: double, d42: double, d43: double, d44: double, d45: double, d46: double, d47: double, d48: double, d49: double, d50: double, d51: double, d52: double, d53: double, d54: double, d55: double, d56: double, d5..."
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 18
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "FF295C950DB94D81BAF58837CD0625A3"
+    },
+    "cell_type" : "markdown",
+    "source" : "####`srch_destination_id` plus 149 numeric columns"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab1592888058-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "4F960341B66247B5812D3A40DF2B1099"
+    },
+    "cell_type" : "code",
+    "source" : "display(destinationsDf, maxPoints=5)",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "362D2A8F9CBA42EB8A12EC9616E53A1D"
+    },
+    "cell_type" : "markdown",
+    "source" : "##Users"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "59838FD080C440FC87318DBA70477F0B"
+    },
+    "cell_type" : "code",
+    "source" : "val usersDf = trainDf.select(\"user_id\",\"posa_continent\",\"user_location_country\",\"user_location_region\",\"user_location_city\")",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "usersDf: org.apache.spark.sql.DataFrame = [user_id: int, posa_continent: int, user_location_country: int, user_location_region: int, user_location_city: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 20
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab1902543591-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "EC508566101B484281B41DD2184B27EA"
+    },
+    "cell_type" : "code",
+    "source" : "display(usersDf, maxPoints=10)",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "E6DE6DC32B45442497111DB9A3EAF407"
+    },
+    "cell_type" : "markdown",
+    "source" : "###Most important features are `user_id` which uniquely identifies the users and `user_location_city` which is their location at the moment of search or booking."
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "04C379F88ED2474FBCF90F6D29C30FD1"
+    },
+    "cell_type" : "code",
+    "source" : "usersDf.select(\"user_id\").distinct.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res39: Long = 1198786\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "1198786"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 27
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "5ACC7B8EB4924CF9A32806FF345D621C"
+    },
+    "cell_type" : "markdown",
+    "source" : "####There are nearly 1.2 million users"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "AD2B76CF3EED4AEDA942A33A824A5C46"
+    },
+    "cell_type" : "code",
+    "source" : "usersDf.select(\"user_location_city\").distinct.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res41: Long = 50447\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "50447"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 28
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "F801D73116C94442863120942C94095E"
+    },
+    "cell_type" : "markdown",
+    "source" : "###Users and Hotels Interaction: Searches and Bookings"
+  }, {
+    "metadata" : {
+      "id" : "5135AEAF20B74928882C90CF3EBF55E1"
+    },
+    "cell_type" : "markdown",
+    "source" : "We also have various data related to user searches and the actual bookings of the hotel clusters."
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "DD610D10893A47498477687F809AA23D"
+    },
+    "cell_type" : "code",
+    "source" : "val actionDf = trainDf.select(\"is_booking\", \"date_time\", \"srch_ci\", \"srch_co\", \"is_mobile\", \"is_package\", \"channel\", \"srch_adults_cnt\", \"srch_children_cnt\", \"srch_rm_cnt\", \"cnt\")",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "actionDf: org.apache.spark.sql.DataFrame = [is_booking: int, date_time: timestamp, srch_ci: string, srch_co: string, is_mobile: int, is_package: int, channel: int, srch_adults_cnt: int, srch_children_cnt: int, srch_rm_cnt: int, cnt: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 23
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab1228882437-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "9E6F85D38E9344039B576C41F05799A4"
+    },
+    "cell_type" : "code",
+    "source" : "display(actionDf, maxPoints=5)",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "14A6FE0FA0744CAB9480E98EA2E76356"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Feature `is_booking` distinguishes between a search and a booking"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "90D8DD923DAC476390AC86E4DCC890C1"
+    },
+    "cell_type" : "code",
+    "source" : "actionDf.select(\"is_booking\").where(\"is_booking = 1\").count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res49: Long = 3000693\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "3000693"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 32
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "9CB3334098DE47CE8A7977FEB62E91AA"
+    },
+    "cell_type" : "markdown",
+    "source" : "There are 3 million bookings"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "4B3FFFF373834192820FCA3A0A491AA3"
+    },
+    "cell_type" : "code",
+    "source" : "actionDf.select(\"is_booking\").where(\"is_booking = 0\").count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res51: Long = 34669600\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "34669600"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 33
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "DEB368CB5BD542308531A6BBF48BE231"
+    },
+    "cell_type" : "markdown",
+    "source" : "And nearly 35 million of clicks"
+  }, {
+    "metadata" : {
+      "id" : "B9D0255ED9A64FC9AFC3F88E052DF0AA"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Other important features are the time of search/booking `date_time` and check-in and check-out times `srch_ci`, `srch_co`"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "4311EA93572946D784E69B27C239B7BA"
+    },
+    "cell_type" : "markdown",
+    "source" : "---"
+  }, {
+    "metadata" : {
+      "id" : "1D658D2B57884ADC8A2C557CA0443AD7"
+    },
+    "cell_type" : "markdown",
+    "source" : "#### Note, that during the Kaggle Expedia competition a data leak was discovered where one could just match on `orig_destination_distance` and `user_location_city` and get a near perfect score for a big chunk of the data. It's not exploited here."
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "D02A131E42D74B648CA4BB209795461D"
+    },
+    "cell_type" : "code",
+    "source" : "",
+    "outputs" : [ ]
+  } ],
+  "nbformat" : 4
+}

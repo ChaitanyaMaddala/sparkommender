@@ -1,0 +1,544 @@
+{
+  "metadata" : {
+    "name" : "2 - Testing Strategy and Feature Engineering",
+    "user_save_timestamp" : "1970-01-01T01:00:00.000Z",
+    "auto_save_timestamp" : "1970-01-01T01:00:00.000Z",
+    "language_info" : {
+      "name" : "scala",
+      "file_extension" : "scala",
+      "codemirror_mode" : "text/x-scala"
+    },
+    "trusted" : true,
+    "customLocalRepo" : null,
+    "customRepos" : null,
+    "customDeps" : null,
+    "customImports" : null,
+    "customArgs" : null,
+    "customSparkConf" : null
+  },
+  "cells" : [ {
+    "metadata" : {
+      "id" : "58A4E75715B04630B264C4ECD641A6F6"
+    },
+    "cell_type" : "markdown",
+    "source" : "#Sparkommender - Testing Stategy and Feature Engineering\n"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "0D4C07FE377A4BAE871E7EAA5625DB57"
+    },
+    "cell_type" : "code",
+    "source" : "import org.apache.spark.sql.{DataFrame, Row, SQLContext}\nimport org.apache.spark.sql.functions._\n\nimport org.apache.spark.mllib.feature.PCA\nimport org.apache.spark.ml.feature.VectorAssembler\nimport org.apache.spark.mllib.linalg.Vectors\nimport org.apache.spark.mllib.linalg.Vector\n\nimport org.joda.time.Days\nimport org.joda.time.format.DateTimeFormat\n\nval sqlContext = new SQLContext(sc)\n\nval csv = \"com.databricks.spark.csv\"\nval csvOptions = Map(\"delimiter\" -> \",\", \"header\" -> \"true\", \"inferSchema\" -> \"false\")\n",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "import org.apache.spark.sql.{DataFrame, Row, SQLContext}\nimport org.apache.spark.sql.functions._\nimport org.apache.spark.mllib.feature.PCA\nimport org.apache.spark.ml.feature.VectorAssembler\nimport org.apache.spark.mllib.linalg.Vectors\nimport org.apache.spark.mllib.linalg.Vector\nimport org.joda.time.Days\nimport org.joda.time.format.DateTimeFormat\nsqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@4e12b955\ncsv: String = com.databricks.spark.csv\ncsvOptions: scala.collection.immutable.Map[String,String] = Map(delimiter -> ,, header -> true, inferSchema -> false)\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 2
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "1460E03736FE480D9DD4682E9FAF7226"
+    },
+    "cell_type" : "markdown",
+    "source" : "##Beating the benchmarks\nBefore engineering any features lets define first the goal and the method to score the models"
+  }, {
+    "metadata" : {
+      "id" : "5AD945936CB64C2E86FDD02C55445408"
+    },
+    "cell_type" : "markdown",
+    "source" : "### The objective is to beat both:\n\n1) Random Guess Benchmark: 0.02260\n\n2) Most Frequent Benchmark: 0.05949\n\nNote, that the benchmark was set for the main test data. \n\nFor the train-test data that's defined later the Most Frequent Benchmark score is `0.0695994`."
+  }, {
+    "metadata" : {
+      "id" : "768F98720CEC4FD5836B457A044C14E4"
+    },
+    "cell_type" : "markdown",
+    "source" : "####The effectivenes of the model is defined by MAP@5 which gives a score for up to 5 best predictions. \nIf the correct answer is given as a first option, the model for this prediction gets a score of 1. The score goes down the further the correct prediction is made. If it's not if the top 5, the score is 0. \n\n"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab659168635-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "44FFEFC2485B40978D4A2DA672289824"
+    },
+    "cell_type" : "code",
+    "source" : "case class Map5Score(position: Int, score: Double)\nList(Map5Score(1,1.0),Map5Score(2,1.0/2),Map5Score(3,1.0/3),Map5Score(4,1.0/4),Map5Score(5,1.0/5),Map5Score(6,0.0))\n",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "defined class Map5Score\nres18: List[Map5Score] = List(Map5Score(1,1.0), Map5Score(2,0.5), Map5Score(3,0.3333333333333333), Map5Score(4,0.25), Map5Score(5,0.2), Map5Score(6,0.0))\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "<div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anon8b63e4fcd436483ccdd1cc87a98fa3aa&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;659168635&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/tabs'], \n      function(playground, _magictabs) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magictabs,\n    \"o\": {}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <div>\n          <ul class=\"nav nav-tabs\" id=\"ul659168635\"><li>\n                <a href=\"#tab659168635-0\"><i class=\"fa fa-table\"/></a>\n              </li><li>\n                <a href=\"#tab659168635-1\"><i class=\"fa fa-dot-circle-o\"/></a>\n              </li><li>\n                <a href=\"#tab659168635-2\"><i class=\"fa fa-line-chart\"/></a>\n              </li><li>\n                <a href=\"#tab659168635-3\"><i class=\"fa fa-bar-chart\"/></a>\n              </li><li>\n                <a href=\"#tab659168635-4\"><i class=\"fa fa-cubes\"/></a>\n              </li></ul>\n\n          <div class=\"tab-content\" id=\"tab659168635\"><div class=\"tab-pane\" id=\"tab659168635-0\">\n              <div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anon1267b115d78946259cfc075f626472ce&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;928149124&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/tableChart'], \n      function(playground, _magictableChart) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magictableChart,\n    \"o\": {\"headers\":[\"position\",\"score\"],\"width\":600,\"height\":400}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon0d12faf96b206ce0afd3c304fc4c8c41&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p> <span style=\"color:red\"><p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon55ef1c54cdf48c1ccb1647756a0018dd&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p></span>\n        <div>\n        </div>\n      </div></div>\n              </div><div class=\"tab-pane\" id=\"tab659168635-1\">\n              <div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anonf210d894a5496bc564f5b6b4c9d9ddf6&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;1708340331&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/scatterChart'], \n      function(playground, _magicscatterChart) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magicscatterChart,\n    \"o\": {\"x\":\"position\",\"y\":\"score\",\"width\":600,\"height\":400}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon39568f3e6a2493e88792cc53bb707f25&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p> <span style=\"color:red\"><p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon144efac2460410bc424eb66a1388f9f6&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p></span>\n        <div>\n        </div>\n      </div></div>\n              </div><div class=\"tab-pane\" id=\"tab659168635-2\">\n              <div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anon8634d8a245548c523453177383acc30f&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;814474125&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/lineChart'], \n      function(playground, _magiclineChart) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magiclineChart,\n    \"o\": {\"x\":\"position\",\"y\":\"score\",\"width\":600,\"height\":400}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon5ff8df169ca667cdbddacf2134352cc5&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p> <span style=\"color:red\"><p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anond02d0a8439fef8c88eb708b952202055&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p></span>\n        <div>\n        </div>\n      </div></div>\n              </div><div class=\"tab-pane\" id=\"tab659168635-3\">\n              <div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anonaa6599dda1e0c9d0a9c8bd9fd48db7ef&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;1022974667&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/barChart'], \n      function(playground, _magicbarChart) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magicbarChart,\n    \"o\": {\"x\":\"position\",\"y\":\"score\",\"width\":600,\"height\":400}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anonb0c018e9439580ac880c6ad8c24a2ebb&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p> <span style=\"color:red\"><p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon679cff7da980b4ce7c4d199248613257&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p></span>\n        <div>\n        </div>\n      </div></div>\n              </div><div class=\"tab-pane\" id=\"tab659168635-4\">\n              <div>\n      <script data-this=\"{&quot;dataId&quot;:&quot;anoneff8177fea4c7e8ef187c77241cea12c&quot;,&quot;dataInit&quot;:[{&quot;position&quot;:1,&quot;score&quot;:1.0},{&quot;position&quot;:2,&quot;score&quot;:0.5},{&quot;position&quot;:3,&quot;score&quot;:0.3333333333333333},{&quot;position&quot;:4,&quot;score&quot;:0.25},{&quot;position&quot;:5,&quot;score&quot;:0.2},{&quot;position&quot;:6,&quot;score&quot;:0.0}],&quot;genId&quot;:&quot;1760268089&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/req(['../javascripts/notebook/playground','../javascripts/notebook/magic/pivotChart'], \n      function(playground, _magicpivotChart) {\n        // data ==> data-this (in observable.js's scopedEval) ==> this in JS => { dataId, dataInit, ... }\n        // this ==> scope (in observable.js's scopedEval) ==> this.parentElement ==> div.container below (toHtml)\n\n        playground.call(data,\n                        this\n                        ,\n                        {\n    \"f\": _magicpivotChart,\n    \"o\": {\"width\":600,\"height\":400,\"derivedAttributes\":{},\"extraOptions\":{}}\n  }\n  \n                        \n                        \n                      );\n      }\n    );/*]]>*/</script>\n    <div>\n        <p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon63185b89700a475caadc7a8c823e9400&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p> <span style=\"color:red\"><p data-bind=\"text: value\"><script data-this=\"{&quot;valueId&quot;:&quot;anon52b2e45437ea734f3c4bb6271ee7dc41&quot;}\" type=\"text/x-scoped-javascript\">/*<![CDATA[*/\nreq(\n['observable', 'knockout'],\nfunction (O, ko) {\n  ko.applyBindings({\n      value: O.makeObservable(valueId)\n    },\n    this\n  );\n});\n        /*]]>*/</script></p></span>\n        <div>\n        </div>\n      </div></div>\n              </div></div>\n        </div>\n      </div></div>"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 14
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "E03AA970740344D48223CC47F2C067B7"
+    },
+    "cell_type" : "markdown",
+    "source" : "####The bussines rationale is that it's not essential to predict only one exact hotel cluster, but it should be present in the top 5 which will be recommended to the users"
+  }, {
+    "metadata" : {
+      "id" : "789705089A15443188AE618D9BD6F2A6"
+    },
+    "cell_type" : "markdown",
+    "source" : "####User Defined Function to calculate MAP@5"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "BD6B8CCA06EF4C3E991DE18BCF84111E"
+    },
+    "cell_type" : "code",
+    "source" : "val map5 = udf((correct: String, predictions: String) => {\n    val l = predictions.split(\" \").toList\n    val i = l.indexOf(correct)\n    if(i == -1) 0.0\n    else 1.0/(i+1)\n})",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "map5: org.apache.spark.sql.UserDefinedFunction = UserDefinedFunction(<function2>,DoubleType,List(StringType, StringType))\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 15
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "53364CCEF7B1414E9B2EA61106284DC2"
+    },
+    "cell_type" : "markdown",
+    "source" : "##Splitting the data for training and testing"
+  }, {
+    "metadata" : {
+      "id" : "7CA13012BCE6442C8CE18F9C9E86024C"
+    },
+    "cell_type" : "markdown",
+    "source" : "The whole train set includes bookings/clicks made in 2013 and 2014. The final test set includes only bookings made in 2015.\n\nIt makes sense to split the train set also based on dates for training the model and evaluating it's quality."
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "8109254C12BD4F4587F51F4161147D64"
+    },
+    "cell_type" : "code",
+    "source" : "val trainFile = \"/Users/radek.ostrowski/git/expedia-kaggle/data/train.csv\"\nval trainDf = sqlContext.read.format(csv).options(csvOptions).load(trainFile)",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "trainFile: String = /Users/radek.ostrowski/git/expedia-kaggle/data/train.csv\ntrainDf: org.apache.spark.sql.DataFrame = [date_time: string, site_name: string, posa_continent: string, user_location_country: string, user_location_region: string, user_location_city: string, orig_destination_distance: string, user_id: string, is_mobile: string, is_package: string, channel: string, srch_ci: string, srch_co: string, srch_adults_cnt: string, srch_children_cnt: string, srch_rm_cnt: string, srch_destination_id: string, srch_destination_type_id: string, is_booking: string, cnt: string, hotel_continent: string, hotel_country: string, hotel_market: string, hotel_cluster: string]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 3
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "DB9272578E6C4D8397ECDA7C97AC0455"
+    },
+    "cell_type" : "code",
+    "source" : "def splitTrainOnYear(df: DataFrame): (DataFrame, DataFrame) = {\n  val train = df.where(to_date(df(\"date_time\")).lt(\"2014-01-01\"))\n  val test = df.where(to_date(df(\"date_time\")).geq(\"2014-01-01\")).where(\"is_booking = 1\")\n    .withColumn(\"id\", monotonicallyIncreasingId.cast(\"string\"))\n  (train, test)\n}",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "splitTrainOnYear: (df: org.apache.spark.sql.DataFrame)(org.apache.spark.sql.DataFrame, org.apache.spark.sql.DataFrame)\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 11
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "8310AFCC47E44BD38A193759FED9216A"
+    },
+    "cell_type" : "code",
+    "source" : "val (train2013, test2014) = splitTrainOnYear(trainDf)",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "train2013: org.apache.spark.sql.DataFrame = [date_time: string, site_name: string, posa_continent: string, user_location_country: string, user_location_region: string, user_location_city: string, orig_destination_distance: string, user_id: string, is_mobile: string, is_package: string, channel: string, srch_ci: string, srch_co: string, srch_adults_cnt: string, srch_children_cnt: string, srch_rm_cnt: string, srch_destination_id: string, srch_destination_type_id: string, is_booking: string, cnt: string, hotel_continent: string, hotel_country: string, hotel_market: string, hotel_cluster: string]\ntest2014: org.apache.spark.sql.DataFrame = [date_time: string, site_name: string, posa_continent: string, user_location_country: string, user_location_region: string, user_location_city: string, or..."
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 12
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "FB5256DD93744E2A8D4783965519455B"
+    },
+    "cell_type" : "markdown",
+    "source" : "Let's save them for later use"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "47A2EEE087734E49890E42E33DA3DC07"
+    },
+    "cell_type" : "code",
+    "source" : "val train2013File = \"/Users/radek.ostrowski/git/expedia-kaggle/data/train-2013\"\nval test2014File = \"/Users/radek.ostrowski/git/expedia-kaggle/data/test-2014\"",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "train2013File: String = /Users/radek.ostrowski/git/expedia-kaggle/data/train-2013\ntest2014File: String = /Users/radek.ostrowski/git/expedia-kaggle/data/test-2014\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 6
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "441BA7F4B9EB4D068672C821C963A744"
+    },
+    "cell_type" : "code",
+    "source" : "train2013.write.save(train2013File)\ntest2014.write.save(test2014File)",
+    "outputs" : [ {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 13
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "FB72708B134B4C9089FEDC52D6B53716"
+    },
+    "cell_type" : "markdown",
+    "source" : "##Feature Engineering"
+  }, {
+    "metadata" : {
+      "id" : "828F391DA9E24CD68670EE5E53D33FCD"
+    },
+    "cell_type" : "markdown",
+    "source" : "Most of the existing features will be used for building models plus several new features designed to improve the quality of the recommendations"
+  }, {
+    "metadata" : {
+      "id" : "1657B1B06A5D49D4B6BA74E2F122EF38"
+    },
+    "cell_type" : "markdown",
+    "source" : "###Date-based features"
+  }, {
+    "metadata" : {
+      "id" : "C829A9562B7749AC8CAA7E5B125E09EB"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Date features are not well understood by ML algorithms, so let's create several useful features out of them"
+  }, {
+    "metadata" : {
+      "id" : "969B7F0FF45C4BDFBBBF55A21A647232"
+    },
+    "cell_type" : "markdown",
+    "source" : "Number of nights per stay - the length of stay may infuence the hotel cluster chosen"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "574A2DC933204C5088600D71F34AA299"
+    },
+    "cell_type" : "code",
+    "source" : "val getNightsStayed = udf((ci: String, co: String) => {\n      val format = DateTimeFormat.forPattern(\"yyyy-MM-dd\")\n      if(ci == null || ci.isEmpty || co == null || co.isEmpty) 0\n      else {\n        try{\n          val daysCount = Days.daysBetween(format.parseLocalDateTime(ci), format.parseLocalDateTime(co)).getDays()\n          if(daysCount < 0) 0 else daysCount\n        } catch {\n          case e: Exception => 0\n        }\n      }\n})\n",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "6362225F2CD546B38A6551C7BEF9ABB8"
+    },
+    "cell_type" : "markdown",
+    "source" : "Month of check-in - bookings of particular clusters will depend on the time of the year/season"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "6F6420E98E6F42A9815C9ED1CDF0FF78"
+    },
+    "cell_type" : "code",
+    "source" : "val getMonth = udf((ci: String) => {\n      val format = DateTimeFormat.forPattern(\"yyyy-MM-dd\")\n      if(ci == null || ci.isEmpty) 0\n      else {\n        try {\n          format.parseLocalDateTime(ci).getMonthOfYear\n        } catch {\n          case e: Exception => 0\n        }\n      }\n})",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "getMonth: org.apache.spark.sql.UserDefinedFunction = UserDefinedFunction(<function1>,IntegerType,List(StringType))\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 20
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "5CEA6BB9D33A40618A1061D60EF42D6C"
+    },
+    "cell_type" : "markdown",
+    "source" : "Number of days to check-in - how long in advance was the hotel cluster clicked/booked should also infuence the selection"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "35A9688DBE8B43358BEF91F166C77B41"
+    },
+    "cell_type" : "code",
+    "source" : "val getDaysToCi = udf((dateTime: String, ci: String) => {\n      val date = dateTime.split(\" \")(0)\n      val format = DateTimeFormat.forPattern(\"yyyy-MM-dd\")\n      if(ci == null || ci.isEmpty || date == null || date.isEmpty) 0\n      else {\n        try {\n          val daysCount = Days.daysBetween(format.parseLocalDateTime(dateTime), format.parseLocalDateTime(ci)).getDays()\n          if(daysCount < 0) 0 else daysCount\n        } catch {\n          case e: Exception => 0\n        }\n      }\n})",
+    "outputs" : [ ]
+  }, {
+    "metadata" : {
+      "id" : "EE17DCF09E3D4E179B999FB3C47F6071"
+    },
+    "cell_type" : "markdown",
+    "source" : "###Family related feature"
+  }, {
+    "metadata" : {
+      "id" : "466390AA248E43B7AB8B6DDB080B6A3C"
+    },
+    "cell_type" : "markdown",
+    "source" : "A family related feature that looks like it could work is whether or not the hotel cluster in a given destination allows children, as this affects the choice for parents traveling with their dependents"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "6FC648E3FFFB408F9F24A4700C3C022F"
+    },
+    "cell_type" : "code",
+    "source" : "val acceptChildrenDf = train2013.where(\"srch_children_cnt IS NOT NULL AND srch_children_cnt > 0\")\n  .select(\"hotel_cluster\", \"srch_destination_id\").distinct",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "familyFriendlyDf: org.apache.spark.sql.DataFrame = [hotel_cluster: int, srch_destination_id: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 43
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "presentation" : {
+        "tabs_state" : "{\n  \"tab_id\": \"#tab2071982062-0\"\n}",
+        "pivot_chart_state" : "{\n  \"hiddenAttributes\": [],\n  \"menuLimit\": 200,\n  \"cols\": [],\n  \"rows\": [],\n  \"vals\": [],\n  \"exclusions\": {},\n  \"inclusions\": {},\n  \"unusedAttrsVertical\": 85,\n  \"autoSortUnusedAttrs\": false,\n  \"inclusionsInfo\": {},\n  \"aggregatorName\": \"Count\",\n  \"rendererName\": \"Table\"\n}"
+      },
+      "id" : "E133E6E56A424ABA86840BCC09E61CB2"
+    },
+    "cell_type" : "code",
+    "source" : "acceptChildrenDf.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res66: Long = 144208\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "144208"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 46
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "EE4AD77B80A741E28E705CA112286AA4"
+    },
+    "cell_type" : "markdown",
+    "source" : "Let's assume that if there are no clicks or bookings made for children at all in certain hotel clusters per destination,\nthose hotels don't accept children"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "718F76342B0F4B88835A15D56C64FFC6"
+    },
+    "cell_type" : "code",
+    "source" : "val noChildrenDf = train2013.select(\"hotel_cluster\", \"srch_destination_id\").distinct.except(acceptChildrenDf)",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "noChildrenDf: org.apache.spark.sql.DataFrame = [hotel_cluster: int, srch_destination_id: int]\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 48
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "C6D5F40C5DF84F63B368065881113457"
+    },
+    "cell_type" : "code",
+    "source" : "noChildrenDf.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res70: Long = 105134\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "105134"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 49
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "6610E114520546F681F046BE2F0E20CC"
+    },
+    "cell_type" : "markdown",
+    "source" : "####Destinations Feature"
+  }, {
+    "metadata" : {
+      "id" : "0E8A82FCBA3640F784E449EDD5738C5A"
+    },
+    "cell_type" : "markdown",
+    "source" : "Let's also use the destinations file which describes the similarity of different destinations and add it as a feature"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "8D9F27F0DD724BBD94F585A66F8EEAF6"
+    },
+    "cell_type" : "code",
+    "source" : "val destinationsFile = \"/Users/radek.ostrowski/git/expedia-kaggle/data/destinations.csv\"\nval destinationsDf = sqlContext.read.format(csv).options(csvOptions).load(destinationsFile)",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "destinationsFile: String = /Users/radek.ostrowski/git/expedia-kaggle/data/destinations.csv\ndestinationsDf: org.apache.spark.sql.DataFrame = [srch_destination_id: int, d1: double, d2: double, d3: double, d4: double, d5: double, d6: double, d7: double, d8: double, d9: double, d10: double, d11: double, d12: double, d13: double, d14: double, d15: double, d16: double, d17: double, d18: double, d19: double, d20: double, d21: double, d22: double, d23: double, d24: double, d25: double, d26: double, d27: double, d28: double, d29: double, d30: double, d31: double, d32: double, d33: double, d34: double, d35: double, d36: double, d37: double, d38: double, d39: double, d40: double, d41: double, d42: double, d43: double, d44: double, d45: double, d46: double, d47: double, d48: double, d49: double, d5..."
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 57
+    } ]
+  }, {
+    "metadata" : {
+      "id" : "0EFDA41F61894165AF477B514C7F23FD"
+    },
+    "cell_type" : "markdown",
+    "source" : "As it contains 149 numeric columns lets apply dimensionality reduction with PCA"
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "0878F462C73B4BE98596D74D730F84B4"
+    },
+    "cell_type" : "code",
+    "source" : "//TODO \n\nval inputColumns = (1 to 149).map(x => \"d\" + x).toArray\n\nval assembler = new VectorAssembler()\n      .setInputCols(inputColumns)\n      .setOutputCol(\"destinations\")\n\ndestinationsDf.map(r => (r.getInt(\"srch_destination_id \"), )) .transform(destinationsDf)\n\nval destVectors = destDf.select(\"destinations\").map(r => r.getAs[Vector](0))\n\nval pcaVectors = new PCA(1).fit(destVectors).transform(destVectors).map(v => v(0))",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "inputColumns: Array[String] = Array(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35, d36, d37, d38, d39, d40, d41, d42, d43, d44, d45, d46, d47, d48, d49, d50, d51, d52, d53, d54, d55, d56, d57, d58, d59, d60, d61, d62, d63, d64, d65, d66, d67, d68, d69, d70, d71, d72, d73, d74, d75, d76, d77, d78, d79, d80, d81, d82, d83, d84, d85, d86, d87, d88, d89, d90, d91, d92, d93, d94, d95, d96, d97, d98, d99, d100, d101, d102, d103, d104, d105, d106, d107, d108, d109, d110, d111, d112, d113, d114, d115, d116, d117, d118, d119, d120, d121, d122, d123, d124, d125, d126, d127, d128, d129, d130, d131, d132, d133, d134, d135, d136, d137, d138, d139, d140, d141, d142, d143, d144, d145,..."
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : ""
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 68
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "28F7B423C10C4B57BF1749A56273C696"
+    },
+    "cell_type" : "code",
+    "source" : "pcaVectors.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res93: Long = 62106\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "62106"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 69
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : false,
+      "id" : "593F90EB5E334B5481381B31F1469BD1"
+    },
+    "cell_type" : "code",
+    "source" : "destinationsDf.count",
+    "outputs" : [ {
+      "name" : "stdout",
+      "output_type" : "stream",
+      "text" : "res95: Long = 62106\n"
+    }, {
+      "metadata" : { },
+      "data" : {
+        "text/html" : "62106"
+      },
+      "output_type" : "execute_result",
+      "execution_count" : 70
+    } ]
+  }, {
+    "metadata" : {
+      "trusted" : true,
+      "input_collapsed" : false,
+      "collapsed" : true,
+      "id" : "CD273E67721548DC89541A7E322DA12F"
+    },
+    "cell_type" : "code",
+    "source" : "",
+    "outputs" : [ ]
+  } ],
+  "nbformat" : 4
+}

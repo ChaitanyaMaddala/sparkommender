@@ -1,0 +1,5 @@
+GET     /                                                   controllers.RecommendController.index()
+
+GET     /api/models/:model/destinations/:destination        controllers.RecommendController.recommend(model: String, destination: Int, user: Option[Int])
+
+GET     /assets/*file                                       controllers.Assets.at(path="/public", file)

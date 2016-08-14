@@ -1,0 +1,10 @@
+{
+  "simulation": "sparkommender.gatling.SparkommenderSimulation",
+  "simulationId": "sparkommendersimulation",
+  "start": 1467912318959,
+  "description": "",
+  "scenarios": ["SparkommenderSimulation"],
+  "assertions": [
+
+  ]
+}

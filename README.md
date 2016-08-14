@@ -1,32 +1,24 @@
 #Sparkommender
 
-Fast, Scalable and Portable Hotel Recommender Microservice.
+This project has been entered into IBM Spark competition. Official project page:
+http://devpost.com/software/sparkommender.
 
-##About
-Sparkommender is a project demonstrating how Apache Spark can be used to
-to fulfill a real business need. In this particular example, it tackles the challenge of
-using the existing data set to make the best possible hotel recommendations
-in real-time to any other web service or directly to users
-visiting the page on computer or mobile devices.
+For Devpost-style summary of the project please refer [here](DEVPOST.md).
 
-For Devpost-style summary of the project refer [here](DEVPOST.md).
+It is currently hosted on IBM Bluemix Containers Service and runs on http://sparkommender.com
 
-##Summary
-This project is split into three phases.
+It uses Kaggle Expedia hotel recommendation dataset: https://www.kaggle.com/c/expedia-hotel-recommendations/data
 
-[Phase One](PHASE_ONE.md) of the project is concerned about the initial
-exploration and analysis of the data.
-Followed by trying different Machine Learning algorithms to come up with
-the best model for recommending hotels.
+    3.8G  train.csv         - the training set
+    264M  test.csv          - the test set
+    132M  destinations.csv  - hotel search latent attribute
 
-[Phase Two](PHASE_TWO.md) builds the actual Web Service that
-can be invoked via a REST interface to get recommendations using
-the models built in the previous phase.
-A simple front-end example app is also included which can be used on computers
-or mobile devices.
+[Sparkommender-ml](sparkommender-ml) holds the machine learning part of the project.
 
-[Phase Three](PHASE_THREE.md) looks at the portability and scalability aspects of the app.
-As the app leverages Docker, it can be easily run on various platforms
-like IBM Bluemix Containers Service or Docker Cloud/AWS.
-It also includes performance test metrics generated with Gatling Stress Tool.
-As a simulation, one million of recommendations were made for the test dataset.
+Summary Spark-notebooks are shared both in the original and in the pdf format [here](sparkommender-ml/notebooks).
+
+[Sparkommender-service](sparkommender-service) holds the web service part of the project.
+
+Performance and stability simulation code is
+[here](sparkommender-ml/src/test/scala/sparkommender/gatling/SparkommenderSimulation).
+The results of running one million recommendations are avaiable on: http://sparkommender.com/assets/simulation/index.html
