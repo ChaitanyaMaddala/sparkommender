@@ -15,10 +15,10 @@ It uses Kaggle Expedia hotel recommendation dataset: https://www.kaggle.com/c/ex
 
 [Sparkommender-ml](sparkommender-ml) holds the machine learning part of the project.
 
-Summary Spark-notebooks are shared both in the original and in the pdf format [here](sparkommender-ml/notebooks).
+Summary of the machine learning part of the project is shared as Spark-notebooks both in the original and in the pdf format [here](sparkommender-ml/notebooks).
 
 [Sparkommender-service](sparkommender-service) holds the web service part of the project.
 
 Performance and stability simulation code is
 [here](sparkommender-ml/src/test/scala/sparkommender/gatling/SparkommenderSimulation.scala).
-The results of running one million recommendations are avaiable on: http://sparkommender.com/assets/simulation/index.html
+The results of running one million recommendations are available on: http://sparkommender.com/assets/simulation/index.html
