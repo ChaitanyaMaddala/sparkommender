@@ -1,6 +1,6 @@
 #Sparkommender
 
-Fast, Scalable and Portable Hotel Recommender Microservice.
+Fast, Scalable and Portable Hotel Recommender Microservice powered by Apache Spark.
 
 <img src="https://cloud.githubusercontent.com/assets/246085/17652299/b3a2f7b0-6270-11e6-8f3b-8c64168b9b2f.png">
 
