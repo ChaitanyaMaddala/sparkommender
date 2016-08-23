@@ -5,8 +5,9 @@ This is the Machine Learning part of the project.
 
 Use provided Spark-notebooks, link them to the uncompressed **Expedia Kaggle** dataset and connect to any Spark cluster to explore the data
 and export the models. Or, copy the uncompressed **Expedia Kaggle** dataset into the `data` folder.
-Update `setMaster` in [MixedModel](src/main/scala/sparkommender/ml/MixedModel.scala)
-file so it points to your Spark cluster and update where
+Update `setMaster` in [MixedModel](src/main/scala/sparkommender/ml/MixedModel.scala) and
+[SimpleCollaborativeFilteringModel](src/main/scala/sparkommender/ml/SimpleCollaborativeFilteringModel.scala)
+files so they point to your Spark cluster and update where
  you want the resulting models stored.
 In either case, make the models available for the second part
 of the project.
